@@ -9,19 +9,17 @@
 /// application.</remarks>
 public static class LoggerFactory
 {
+    /// <summary>
+    /// Gets or sets the path where log files will be stored. The default value is set to a relative path of "..\logs".
+    /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static void UpdatePath(string loggerPath, string loggerConfigurePath)
-    {
-        if (string.IsNullOrWhiteSpace(loggerPath) == false)
-        {
-            LoggerHelper.defaultLogPath = loggerPath;
-        }
+    public static string LogPath { get; set; } = Path.Combine("..", "logs");
 
-        if (string.IsNullOrWhiteSpace(loggerConfigurePath) == false)
-        {
-            LoggerHelper.defaultConfigPath = loggerConfigurePath;
-        }
-    }
+    /// <summary>
+    /// Gets or sets the path where logger configuration files are located. The default value is set to "configs".
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static string LogConfigPath { get; set; } = "configs";
 
     /// <summary>
     /// Retrieves an <see cref="ILogger"/> instance for the specified category.
@@ -74,16 +72,18 @@ public static class LoggerFactory
 
                     string node = $"{LoggerHelper.nodeName}.{category}";
 
-                    string defaultDirectoryPath = Path.Combine(LoggerHelper.defaultLogPath, category);
+                    string defaultDirectoryPath = Path.Combine(LoggerFactory.LogPath, category);
 
-                    string dirName = LoggerHelper.loggerConfigure.LoggerSettings.Read(node, defaultDirectoryPath);
+                    var dir = LoggerHelper.loggerConfigure.LoggerSettings.Read(node, defaultDirectoryPath);
 
-                    if (new DirectoryInfo(dirName).Exists == false && dirName != defaultDirectoryPath)
+                    DirectoryInfo directoryInfo = new DirectoryInfo(dir);
+
+                    if (directoryInfo.Exists == false)
                     {
-                        LoggerHelper.loggerConfigure.LoggerSettings.Write(node, dirName = defaultDirectoryPath);
+                        directoryInfo.Create();
                     }
 
-                    LoggerHelper.Loggers[category] = logger = new InnerLogger(host, dirName, logFileNameGanerator);
+                    LoggerHelper.Loggers[category] = logger = new InnerLogger(host, directoryInfo.FullName, logFileNameGanerator);
                 }
             }
         }

@@ -92,7 +92,9 @@ internal static class TestContext
             """
         );
 
-        LoggerFactory.UpdatePath(LogRoot, ConfigRoot);
+        LoggerFactory.LogPath = LogRoot;
+
+        LoggerFactory.LogConfigPath = ConfigRoot;
     }
 
     internal static async Task<ILogger> CreateCategoryLoggerAsync(object host, string category, Func<string>? fileNameGenerator = null)

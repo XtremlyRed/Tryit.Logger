@@ -15,10 +15,6 @@ internal static class LoggerHelper
 
     internal static readonly List<Logger> Writers = new();
 
-    internal static string defaultConfigPath = "configs";
-
-    internal static string defaultLogPath = Path.Combine("..", "logs");
-
     internal static readonly IDictionary<LoggerLevel, string> LoggerLevelMaps = Enum.GetValues(typeof(LoggerLevel)).OfType<LoggerLevel>().ToDictionary(i => i, i => i.ToString().PadLeft(5, ' '));
 
     internal static LoggerConfigure loggerConfigure = default!;
@@ -41,7 +37,7 @@ internal static class LoggerHelper
 
             IsInitialized = true;
 
-            loggerConfigure = new LoggerConfigure(defaultConfigPath);
+            loggerConfigure = new LoggerConfigure(LoggerFactory.LogConfigPath);
 
             ThreadPool.QueueUserWorkItem(static async (u) => await LoopWriteAsync().ConfigureAwait(false));
         }
