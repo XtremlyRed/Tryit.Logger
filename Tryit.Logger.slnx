@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/.solutionItems/">
+    <File Path=".csharpierignore" />
+    <File Path=".csharpierrc.json" />
+    <File Path="GlobalCompileSettings.Targets" />
+  </Folder>
+  <Project Path="Tryit.Logger/Tryit.Logger.csproj" />
+  <Project Path="Tryit.Logger.Tests/Tryit.Logger.Tests.csproj" />
+</Solution>

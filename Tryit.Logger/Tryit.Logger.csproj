@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+
+	<Import Project="$(SolutionDir)\GlobalCompileSettings.Targets" />
+
+
+	<ItemGroup>
+	  <PackageReference Include="Tryit.Configure" Version="1.2.0" />
+	</ItemGroup>
+
+</Project>

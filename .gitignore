@@ -1,0 +1,11 @@
+﻿################################################################################
+# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
+################################################################################
+
+/.vs
+/bin/AnyCPU/Debug
+/Tryit.Logger/obj
+/Tryit.Logger.Tests/bin/Debug
+/Tryit.Logger.Tests/obj
+/bin/AnyCPU/Release
+/Tryit.Logger.Tests/bin/Release/net10.0

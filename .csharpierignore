@@ -1,0 +1,9 @@
+# xml file
+*.xaml
+*.xml
+
+# csproj file
+*.csproj
+
+# Targets file
+*.Targets
