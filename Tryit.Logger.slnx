@@ -5,5 +5,6 @@
     <File Path="GlobalCompileSettings.Targets" />
   </Folder>
   <Project Path="Tryit.Logger/Tryit.Logger.csproj" />
+  <Project Path="Tryit.Logger.Run/Tryit.Logger.Run.csproj" Id="fc5564e0-450a-400b-9369-3b8cc579eb98" />
   <Project Path="Tryit.Logger.Tests/Tryit.Logger.Tests.csproj" />
 </Solution>

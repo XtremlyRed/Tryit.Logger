@@ -9,3 +9,6 @@
 /Tryit.Logger.Tests/obj
 /bin/AnyCPU/Release
 /Tryit.Logger.Tests/bin/Release/net10.0
+/Tryit.Logger.Run/bin/Debug
+/Tryit.Logger.Run/obj
+/Tryit.Logger.Run/bin/Release/net10.0

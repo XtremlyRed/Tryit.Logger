@@ -70,7 +70,7 @@ public static class LoggerFactory
             {
                 if (LoggerHelper.Loggers.TryGetValue(category, out logger) == false)
                 {
-                    LoggerHelper.IsInitialized = true;
+                    LoggerHelper.TryInitialize();
 
                     string node = $"{LoggerHelper.nodeName}.{category}";
 
@@ -116,7 +116,7 @@ public static class LoggerFactory
             {
                 if (LoggerHelper.Loggers.TryGetValue(fileInfo.FullName, out logger) == false)
                 {
-                    LoggerHelper.IsInitialized = true;
+                    LoggerHelper.TryInitialize();
 
                     LoggerHelper.Loggers[fileInfo.FullName] = logger = new InnerLogger.TargetFileLoggerWriter(host, fileInfo, fileInfo.DirectoryName!, null);
                 }

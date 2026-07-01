@@ -23,18 +23,23 @@ internal static class LoggerHelper
 
     internal static LoggerConfigure loggerConfigure = default!;
 
-    internal static bool IsInitialized;
+    private static bool IsInitialized;
 
-    static LoggerHelper()
+    public static void TryInitialize()
     {
-        ThreadPool.QueueUserWorkItem(async (o) => await LoggerHelperInitAsync());
-
-        static async Task LoggerHelperInitAsync()
+        if (IsInitialized)
         {
-            while (IsInitialized == false)
+            return;
+        }
+
+        lock (Loggers)
+        {
+            if (IsInitialized)
             {
-                await Task.Delay(100).ConfigureAwait(false);
+                return;
             }
+
+            IsInitialized = true;
 
             loggerConfigure = new LoggerConfigure(defaultConfigPath);
 
@@ -52,11 +57,17 @@ internal static class LoggerHelper
 
             for (int i = Writers.Count - 1; i >= 0; i--)
             {
-                hasContent |= Writers[i].IsEmpty == false;
+                if (Writers[i].IsEmpty == false)
+                {
+                    hasContent = true;
+                    break;
+                }
             }
 
             if (hasContent == false)
             {
+                loggerConfigure.WaitIntervalCheck(hasContent);
+
                 continue;
             }
 
@@ -64,7 +75,7 @@ internal static class LoggerHelper
 
             DateTime retentionTime = loggerConfigure.GetRetentionTime(ref dateTime);
 
-            bool hasWriten = false;
+            hasContent = false;
 
             for (int i = Writers.Count - 1; i >= 0; i--)
             {
@@ -72,7 +83,7 @@ internal static class LoggerHelper
                 {
                     loggerConfigure.stringBuilder.Clear();
 
-                    hasWriten |= Writers[i].Write(loggerConfigure.stringBuilder, ref dateTime, ref retentionTime);
+                    hasContent |= Writers[i].Write(loggerConfigure.stringBuilder, ref dateTime, ref retentionTime);
                 }
                 catch
                 {
@@ -80,7 +91,7 @@ internal static class LoggerHelper
                 }
             }
 
-            loggerConfigure.WaitIntervalCheck(hasWriten);
+            loggerConfigure.WaitIntervalCheck(hasContent);
         }
     }
 
@@ -98,17 +109,26 @@ internal static class LoggerHelper
     {
         internal LoggerConfigure(string defaultPath = "configs")
         {
-            LoggerSettings = ConfigurationFactory.GetConfiguration(Path.Combine(defaultPath, "logger.json"));
+            FileInfo fileInfo = new FileInfo(Path.Combine(defaultPath, "logger.json"));
+
+            if (fileInfo.Directory is not null && fileInfo.Directory.Exists == false)
+            {
+                fileInfo.Directory?.Create();
+            }
+
+            LoggerSettings = ConfigurationFactory.GetConfiguration(fileInfo.FullName);
 
             MaxFileSize = (int)(LoggerSettings.Read<double>("file_size", 2d).CoerceAtLeast(0.1) * 1024 * 1024);
 
-            record_delay_ms = waitInterval = (int)(LoggerSettings.Read("record_delay", 0.1d).CoerceAtLeast(0.1) * 1000);
+            scan_cycle = (int)(LoggerSettings.Read("scan_cycle", 0.1d).CoerceAtLeast(0.1) * 1000);
 
             record_days = LoggerSettings.Read<double>("record_days", -1d);
 
             MinLoggerLevel = LoggerSettings.Read("min_level", LoggerLevel.Info);
 
-            maxCounter = 10_000 / record_delay_ms;
+            max_scan_cycle = (int)(LoggerSettings.Read("max_scan_cycle", 3d).CoerceAtLeast(0.5) * 1000);
+
+            maxCounter = 10_000 / scan_cycle;
         }
 
         internal readonly IConfiguration LoggerSettings;
@@ -121,11 +141,11 @@ internal static class LoggerHelper
 
         internal int counter = 0;
 
-        private int waitInterval;
-
         private readonly int maxCounter;
 
-        private readonly int record_delay_ms;
+        private readonly int scan_cycle;
+
+        private readonly int max_scan_cycle;
 
         private readonly double record_days;
 
@@ -139,20 +159,22 @@ internal static class LoggerHelper
         {
             if (hasWriten)
             {
-                waitInterval = record_delay_ms;
                 counter = 0;
+
                 return;
             }
 
-            if (++counter > maxCounter)
-            {
-                waitInterval = 3000;
-            }
+            counter++;
         }
 
         internal Task WaitAsync()
         {
-            return Task.Delay(waitInterval);
+            if (counter > maxCounter)
+            {
+                return Task.Delay(max_scan_cycle);
+            }
+
+            return Task.Delay(scan_cycle);
         }
     }
 }
