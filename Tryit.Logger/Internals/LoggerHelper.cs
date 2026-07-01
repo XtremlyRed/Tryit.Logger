@@ -128,7 +128,7 @@ internal static class LoggerHelper
 
             max_scan_cycle = (int)(LoggerSettings.Read("max_scan_cycle", 3d).CoerceAtLeast(0.5) * 1000);
 
-            maxCounter = 10_000 / scan_cycle;
+            maxCounter = Convert.ToUInt64(10_000 / scan_cycle);
         }
 
         internal readonly IConfiguration LoggerSettings;
@@ -139,9 +139,9 @@ internal static class LoggerHelper
 
         internal readonly StringBuilder stringBuilder = new StringBuilder();
 
-        internal int counter = 0;
+        internal ulong counter = 0;
 
-        private readonly int maxCounter;
+        private readonly ulong maxCounter;
 
         private readonly int scan_cycle;
 
