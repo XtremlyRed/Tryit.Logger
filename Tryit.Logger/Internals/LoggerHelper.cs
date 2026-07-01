@@ -57,7 +57,7 @@ internal static class LoggerHelper
 
             for (int i = Writers.Count - 1; i >= 0; i--)
             {
-                if (Writers[i].IsEmpty == false)
+                if (Writers[i].NeedWrite)
                 {
                     hasContent = true;
                     break;

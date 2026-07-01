@@ -12,8 +12,8 @@
 		<None Include="$(SolutionDir)\README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 	<PropertyGroup>
-		<PackageVersion>1.2.1</PackageVersion>
-		<AssemblyVersion>1.2.1</AssemblyVersion>
+		<PackageVersion>1.2.4</PackageVersion>
+		<AssemblyVersion>1.2.4</AssemblyVersion>
 		<LangVersion>14.0</LangVersion>
 		<PackageProjectUrl>https://github.com/xtremlyred/tryit.logger</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/xtremlyred/tryit.logger</RepositoryUrl>

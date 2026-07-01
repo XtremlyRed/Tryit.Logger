@@ -19,7 +19,6 @@ namespace Tryit.Logger.Internals;
 /// of this class are tracked globally, and a background  task ensures that log entries are written to files in a
 /// thread-safe manner.  This class is intended for internal use and is not thread-safe for direct manipulation of its
 /// internal state. Use the provided methods to interact with the logging functionality.</remarks>
-[DebuggerDisplay("{currentFileInfo.FullName}")]
 internal partial class Logger : ConcurrentQueue<string>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -210,6 +209,9 @@ internal partial class Logger : ConcurrentQueue<string>
 
     #region write
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    public bool NeedWrite => IsEmpty == false || writeErrorContent is not null;
+
     internal bool Write(StringBuilder fileBuilder, ref DateTime dateTime, ref DateTime deleteDatetime)
     {
         if (IsEmpty)
@@ -250,6 +252,10 @@ internal partial class Logger : ConcurrentQueue<string>
         catch (DirectoryNotFoundException)
         {
             fileInfo.Directory?.Create();
+
+            currentFileSize = 0;
+
+            maxFileIndex = 1;
 
             writeErrorContent = fileContent;
         }
@@ -298,6 +304,23 @@ internal partial class Logger : ConcurrentQueue<string>
         return $"{DateTime.Now:yyyy-MM-dd}";
     }
 
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override string ToString()
+    {
+        return $"[ Source : {hostName} ]  [ Path : {currentFileInfo?.FullName} ]";
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj)
+    {
+        return base.Equals(obj);
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
     #endregion
 
     internal class TargetFileLoggerWriter : Logger

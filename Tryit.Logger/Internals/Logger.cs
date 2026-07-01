@@ -15,7 +15,6 @@ namespace Tryit.Logger.Internals;
 /// Debug, Info, Warn, Error, Fatal, and Trace. It supports formatted messages and allows developers to specify the log
 /// level for each message. This class is typically used to record application events, diagnostic information, and
 /// errors for troubleshooting and monitoring purposes.</remarks>
-[DebuggerDisplay("[ Source : {hostName} ]  [ Path : {loggerWriter} ]")]
 [EditorBrowsable(EditorBrowsableState.Never)]
 internal partial class Logger : ILogger
 {
