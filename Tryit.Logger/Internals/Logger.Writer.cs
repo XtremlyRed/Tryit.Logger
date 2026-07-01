@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 
 namespace Tryit.Logger.Internals;
 
@@ -227,8 +228,6 @@ internal partial class Logger : ConcurrentQueue<string>
 
         while (TryDequeue(out string? content))
         {
-            currentFileSize = currentFileSize + Encoding.UTF8.GetByteCount(content) + LoggerHelper.NewLineCount;
-
             fileBuilder.AppendLine(content);
         }
 
@@ -236,7 +235,17 @@ internal partial class Logger : ConcurrentQueue<string>
 
         try
         {
-            File.AppendAllText(fileInfo.FullName, fileContent, Encoding.UTF8);
+            var bytes = Encoding.UTF8.GetBytes(fileContent);
+
+            currentFileSize += bytes.Length;
+
+            using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, FileOptions.SequentialScan);
+
+            fileStream.Write(bytes, 0, bytes.Length);
+
+            //using StreamWriter streamWriter = new StreamWriter(fileInfo.FullName, append: true, Encoding.UTF8);
+
+            //streamWriter.Write(fileContent);
         }
         catch (DirectoryNotFoundException)
         {
