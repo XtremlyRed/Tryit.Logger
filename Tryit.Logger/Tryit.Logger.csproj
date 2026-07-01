@@ -6,6 +6,14 @@
 	</PropertyGroup>
 
 
+	<PropertyGroup>
+		<Description>
+
+			Tryit.Logger is a lightweight file-based logging library for .NET applications. It provides a simple ILogger API, category-based logger caching, configurable log output paths, log level filtering, asynchronous background flushing, and automatic file rotation.
+
+		</Description>
+	</PropertyGroup>
+
 	<Import Project="$(SolutionDir)\GlobalCompileSettings.Targets" />
 
 
