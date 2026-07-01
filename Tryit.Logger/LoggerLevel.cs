@@ -1,5 +1,8 @@
 ﻿namespace Tryit.Logger;
 
+/// <summary>
+/// Represents the severity levels for logging messages in an application or system.
+/// </summary>
 public enum LoggerLevel
 {
     /// <summary>
