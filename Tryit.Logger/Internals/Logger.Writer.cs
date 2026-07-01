@@ -58,13 +58,13 @@ internal partial class Logger : ConcurrentQueue<string>
     private FileInfo? currentFileInfo;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="LoggerWriter"/> class, which is responsible for writing log entries
+    /// Initializes a new instance of the <see cref="Logger"/> class, which is responsible for writing log entries
     /// to a file.
     /// </summary>
     /// <remarks>This constructor ensures that the specified logging directory exists and initializes the
     /// logging configuration,  including the maximum file size and minimum logging level. Multiple instances of <see
     /// cref="Logger"/> are tracked globally.</remarks>
-    /// <param name="nodeName">The name of the logging node, used to identify the source of the logs.</param>
+    /// <param name="host">The host object generating the log messages. This can be a string, a Type, or any object. The host name will be derived from this parameter.</param>
     /// <param name="targetDirName">The default directory where log files will be created. If the directory does not exist, it will be created.</param>
     /// <param name="logFileNameGanerator">An optional function to generate log file names dynamically. If not provided, a default naming convention will
     /// be used.</param>
@@ -209,9 +209,20 @@ internal partial class Logger : ConcurrentQueue<string>
 
     #region write
 
+    /// <summary>
+    /// Gets a value indicating whether there are log entries that need to be written to the log file.
+    /// </summary>
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public bool NeedWrite => IsEmpty == false || writeErrorContent is not null;
 
+    /// <summary>
+    /// Writes the log entries from the internal queue to the specified file, handling file initialization and error
+    /// scenarios.
+    /// </summary>
+    /// <param name="fileBuilder">The <see cref="StringBuilder"/> used to accumulate log entries before writing to the file.</param>
+    /// <param name="dateTime">The current date and time, used for log file rotation and naming.</param>
+    /// <param name="deleteDatetime">The date and time used to determine when old log files should be deleted.</param>
+    /// <returns>Returns <c>true</c> if log entries were written; otherwise, <c>false</c>.</returns>
     internal bool Write(StringBuilder fileBuilder, ref DateTime dateTime, ref DateTime deleteDatetime)
     {
         if (IsEmpty)
@@ -267,6 +278,11 @@ internal partial class Logger : ConcurrentQueue<string>
         return true;
     }
 
+    /// <summary>
+    /// Determines whether the current log file can be used for writing based on the date and file size constraints.
+    /// </summary>
+    /// <param name="dateTime">The current date and time, used for log file rotation and naming.</param>
+    /// <returns>Returns <c>true</c> if the current log file can be used; otherwise, <c>false</c>.</returns>
     private bool CanUseThisFile(ref DateTime dateTime)
     {
         if (currentFileInfo is null)
@@ -286,12 +302,17 @@ internal partial class Logger : ConcurrentQueue<string>
         if (currentFileSize >= LoggerHelper.loggerConfigure.MaxFileSize)
         {
             maxFileIndex++;
-            return false; //文件大小 比 最大值 还大的话 那就不能用了
+
+            return false;
         }
 
         return true;
     }
 
+    /// <summary>
+    /// Generates a log file name based on the current date or a custom naming function if provided.
+    /// </summary>
+    /// <returns>Returns the generated log file name.</returns>
     private string FileNameGenerator()
     {
         if (logFileNameGenerator is not null)
@@ -323,8 +344,18 @@ internal partial class Logger : ConcurrentQueue<string>
     }
     #endregion
 
+    /// <summary>
+    /// Represents a specialized logger that writes log entries to a specific target file. This class inherits from the <see cref="Logger"/> class and overrides the file initialization behavior to use a predefined <see cref="FileInfo"/> instance for logging.
+    /// </summary>
     internal class TargetFileLoggerWriter : Logger
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TargetFileLoggerWriter"/> class with the specified host, target file information, default directory name, and an optional log file name generator function.
+        /// </summary>
+        /// <param name="host">The host object associated with the logger.</param>
+        /// <param name="fileInfo">The target file information for logging.</param>
+        /// <param name="defaultDirName">The default directory name for log files.</param>
+        /// <param name="logFileNameGanerator">An optional function to generate log file names dynamically.</param>
         public TargetFileLoggerWriter(object host, FileInfo fileInfo, string defaultDirName, Func<string>? logFileNameGanerator = null)
             : base(host, defaultDirName, logFileNameGanerator)
         {
@@ -332,17 +363,31 @@ internal partial class Logger : ConcurrentQueue<string>
             fileInfo.Directory?.Create();
         }
 
+        /// <summary>
+        /// Overrides the file initialization behavior to use the predefined <see cref="FileInfo"/> instance for logging. This method sets the output <paramref name="fileInfo"/> parameter to the current file information and does not modify the provided <paramref name="dateTime"/> or <paramref name="deleteDateTime"/> parameters.
+        /// </summary>
+        /// <param name="fileInfo">The output parameter that will be set to the current file information.</param>
+        /// <param name="dateTime">The date and time parameter, not modified in this override.</param>
+        /// <param name="deleteDateTime">The delete date and time parameter, not modified in this override.</param>
         protected override void FileInitialize(out FileInfo fileInfo, ref DateTime dateTime, ref DateTime deleteDateTime)
         {
             fileInfo = currentFileInfo!;
         }
     }
 
+    /// <summary>
+    /// Represents a block of log file information, including the file's creation time, index, and deletion eligibility. This class is used internally by the <see cref="Logger"/> class to manage log files and determine whether they can be deleted based on their age and naming conventions.
+    /// </summary>
     private class FileBlock
     {
         public readonly FileInfo FileInfo;
         private readonly DateTime deleteDateTime;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FileBlock"/> class with the specified <see cref="FileInfo"/> and deletion date. The constructor parses the file name to extract the creation date and index, determining whether the file can be deleted based on its age relative to the provided deletion date.
+        /// </summary>
+        /// <param name="fileInfo">The file information for the log file.</param>
+        /// <param name="deleteDateTime">The date and time after which the file can be deleted.</param>
         public FileBlock(FileInfo fileInfo, DateTime deleteDateTime)
         {
             FileInfo = fileInfo;
