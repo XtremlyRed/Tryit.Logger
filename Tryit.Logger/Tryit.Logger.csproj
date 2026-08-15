@@ -21,4 +21,9 @@
 	  <PackageReference Include="Tryit.Configure" Version="1.2.0" />
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <Folder Include="Core\" />
+	</ItemGroup>
+ 
 </Project>

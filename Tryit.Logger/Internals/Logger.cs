@@ -15,6 +15,7 @@ namespace Tryit.Logger.Internals;
 /// Debug, Info, Warn, Error, Fatal, and Trace. It supports formatted messages and allows developers to specify the log
 /// level for each message. This class is typically used to record application events, diagnostic information, and
 /// errors for troubleshooting and monitoring purposes.</remarks>
+[DebuggerDisplay("[ Source : {hostName} ]  [ Path : {loggerWriter} ]")]
 [EditorBrowsable(EditorBrowsableState.Never)]
 internal partial class Logger : ILogger
 {
@@ -25,6 +26,15 @@ internal partial class Logger : ILogger
     /// store the host name value for operations that require it.</remarks>
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly string hostName;
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private readonly LoggerWriter loggerWriter;
+
+    public Logger(string hostName, LoggerWriter loggerWriter)
+    {
+        this.hostName = hostName;
+        this.loggerWriter = loggerWriter;
+    }
 
     /// <summary>
     /// Logs a debug-level message with the specified format and parameters.
@@ -38,7 +48,7 @@ internal partial class Logger : ILogger
     /// name="format"/> string at the corresponding placeholders.</param>
     public void Debug(string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, LoggerLevel.Debug);
+        loggerWriter.Notify(this.hostName, format, parameters, LoggerLevel.Debug);
     }
 
     /// <summary>
@@ -52,7 +62,7 @@ internal partial class Logger : ILogger
     /// defined in <paramref name="format"/>.</param>
     public void Error(string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, LoggerLevel.Error);
+        loggerWriter.Notify(this.hostName, format, parameters, LoggerLevel.Error);
     }
 
     /// <summary>
@@ -66,7 +76,7 @@ internal partial class Logger : ILogger
     /// name="format"/> string.</param>
     public void Fatal(string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, LoggerLevel.Fatal);
+        loggerWriter.Notify(this.hostName, format, parameters, LoggerLevel.Fatal);
     }
 
     /// <summary>
@@ -79,7 +89,7 @@ internal partial class Logger : ILogger
     /// <param name="parameters">An array of objects to format and include in the log message. Can be empty if no format items are used.</param>
     public void Info(string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, LoggerLevel.Info);
+        loggerWriter.Notify(this.hostName, format, parameters, LoggerLevel.Info);
     }
 
     /// <summary>
@@ -92,7 +102,7 @@ internal partial class Logger : ILogger
     /// <param name="parameters">An array of objects to format and include in the log message. Can be empty if no parameters are required.</param>
     public void Trace(string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, LoggerLevel.Trace);
+        loggerWriter.Notify(this.hostName, format, parameters, LoggerLevel.Trace);
     }
 
     /// <summary>
@@ -106,7 +116,7 @@ internal partial class Logger : ILogger
     /// is logged as-is.</param>
     public void Warn(string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, LoggerLevel.Warn);
+        loggerWriter.Notify(this.hostName, format, parameters, LoggerLevel.Warn);
     }
 
     /// <summary>
@@ -121,6 +131,6 @@ internal partial class Logger : ILogger
     /// defined in <paramref name="format"/>.</param>
     public void Log(LoggerLevel loggerLevel, string format, params object[] parameters)
     {
-        this.WriteLogger(hostName, format, parameters, loggerLevel);
+        loggerWriter.Notify(this.hostName, format, parameters, loggerLevel);
     }
 }

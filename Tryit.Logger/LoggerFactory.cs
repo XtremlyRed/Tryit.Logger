@@ -10,18 +10,6 @@
 public static class LoggerFactory
 {
     /// <summary>
-    /// Gets or sets the path where log files will be stored. The default value is set to a relative path of "..\logs".
-    /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static string LogPath { get; set; } = Path.Combine("..", "logs");
-
-    /// <summary>
-    /// Gets or sets the path where logger configuration files are located. The default value is set to "configs".
-    /// </summary>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static string LogConfigPath { get; set; } = "configs";
-
-    /// <summary>
     /// Retrieves an <see cref="ILogger"/> instance for the specified category.
     /// </summary>
     /// <typeparam name="T">The type of the host object, which must be non-null.</typeparam>
@@ -62,28 +50,17 @@ public static class LoggerFactory
 
         _ = string.IsNullOrWhiteSpace(category) ? throw new ArgumentException("invalid category") : 0;
 
-        if (LoggerHelper.Loggers.TryGetValue(category, out InnerLogger? logger) == false)
+        GetHostName(host, out var hostName);
+
+        if (LoggerHelper.LoggerMaps.TryGetValue(hostName, out var logger) == false)
         {
-            lock (LoggerHelper.Loggers)
+            lock (LoggerHelper.LoggerMaps)
             {
-                if (LoggerHelper.Loggers.TryGetValue(category, out logger) == false)
+                if (LoggerHelper.LoggerMaps.TryGetValue(hostName, out logger) == false)
                 {
-                    LoggerHelper.TryInitialize();
+                    var loggerWriter = GetWriter(category, logFileNameGanerator);
 
-                    string node = $"{LoggerHelper.nodeName}.{category}";
-
-                    string defaultDirectoryPath = Path.Combine(LoggerFactory.LogPath, category);
-
-                    var dir = LoggerHelper.loggerConfigure.LoggerSettings.Read(node, defaultDirectoryPath);
-
-                    DirectoryInfo directoryInfo = new DirectoryInfo(dir);
-
-                    if (directoryInfo.Exists == false)
-                    {
-                        directoryInfo.Create();
-                    }
-
-                    LoggerHelper.Loggers[category] = logger = new InnerLogger(host, directoryInfo.FullName, logFileNameGanerator);
+                    LoggerHelper.LoggerMaps[hostName] = logger = new InnerLog(hostName, loggerWriter);
                 }
             }
         }
@@ -110,19 +87,57 @@ public static class LoggerFactory
 
         _ = fileInfo ?? throw new ArgumentNullException(nameof(fileInfo));
 
-        if (LoggerHelper.Loggers.TryGetValue(fileInfo.FullName, out InnerLogger? logger) == false)
-        {
-            lock (LoggerHelper.Loggers)
-            {
-                if (LoggerHelper.Loggers.TryGetValue(fileInfo.FullName, out logger) == false)
-                {
-                    LoggerHelper.TryInitialize();
+        GetHostName(host, out var hostName);
 
-                    LoggerHelper.Loggers[fileInfo.FullName] = logger = new InnerLogger.TargetFileLoggerWriter(host, fileInfo, fileInfo.DirectoryName!, null);
+        var identity = $"{hostName}{fileInfo.FullName}";
+
+        if (LoggerHelper.LoggerMaps.TryGetValue(identity, out var logger) == false)
+        {
+            lock (LoggerHelper.LoggerMaps)
+            {
+                if (LoggerHelper.LoggerMaps.TryGetValue(identity, out logger) == false)
+                {
+                    var loggerWriter = new TargetFileLoggerWriter(fileInfo);
+
+                    LoggerHelper.LoggerMaps[identity] = logger = new InnerLog(hostName, loggerWriter);
                 }
             }
         }
 
         return logger;
+    }
+
+    private static LoggerWriter GetWriter(string category, Func<string>? logFileNameGanerator)
+    {
+        if (LoggerHelper.LoggerWriterMaps.TryGetValue(category, out LoggerWriter? loggerWriter) == false)
+        {
+            lock (LoggerHelper.LoggerWriterMaps)
+            {
+                if (LoggerHelper.LoggerWriterMaps.TryGetValue(category, out loggerWriter) == false)
+                {
+                    string node = $"{LoggerHelper.nodeName}.{category}";
+
+                    string directoryName = LoggerHelper.LoggerSettings.Read(node, Path.Combine("..", "logs", category));
+
+                    LoggerHelper.LoggerWriterMaps[category] = loggerWriter = new LoggerWriter(directoryName, logFileNameGanerator);
+                }
+            }
+        }
+
+        return loggerWriter;
+    }
+
+    private static void GetHostName<T>(T host, out string hostName)
+        where T : notnull
+    {
+        _ = host ?? throw new ArgumentNullException(nameof(host));
+
+        hostName = host switch
+        {
+            string hostString => hostString!,
+            sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal => host.ToString()!,
+            Type type => type.Name!,
+            _ => host?.GetType()?.Name! ?? "unknown",
+        };
     }
 }
